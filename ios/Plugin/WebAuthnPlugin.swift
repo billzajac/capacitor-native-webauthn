@@ -56,8 +56,13 @@ class GetAppleSignInHandler: NSObject, ASAuthorizationControllerDelegate {
         let _username: String = call.getObject("user")?["name"] as! String
         let _rp: String = call.getObject("rp")?["id"] as! String
         
+        print("WebAuthn Register - RP: \(_rp), User: \(_username), UserID: \(_userid)")
+        
         let challengeData = Data(base64urlEncoded: _challenge)!
-        let useridData = Data(_userid.utf8)
+        // User ID is base64url encoded, decode it
+        let useridData = Data(base64urlEncoded: _userid) ?? Data(_userid.utf8)
+        
+        print("WebAuthn Register - Challenge size: \(challengeData.count), UserID size: \(useridData.count)")
         
         let platformProvider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: _rp)
         let platformKeyRequest = platformProvider.createCredentialRegistrationRequest(
@@ -143,8 +148,9 @@ class GetAppleSignInHandler: NSObject, ASAuthorizationControllerDelegate {
     }
     
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        print("WebAuthn Error: \(error)")
         guard let authorizationError = error as? ASAuthorizationError else {
-            call.reject(PasskeyError.UNKNOWN.rawValue)
+            call.reject(PasskeyError.UNKNOWN.rawValue, error.localizedDescription)
             return
         }
         var errorDescription: String =
@@ -164,7 +170,8 @@ class GetAppleSignInHandler: NSObject, ASAuthorizationControllerDelegate {
                 default:
                     PasskeyError.UNKNOWN.rawValue
             }
-        call.reject(errorDescription)
+        print("WebAuthn Error Code: \(authorizationError.code.rawValue), Description: \(errorDescription)")
+        call.reject(errorDescription, authorizationError.localizedDescription)
     }
 }
 
