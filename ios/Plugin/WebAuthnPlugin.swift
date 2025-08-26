@@ -54,7 +54,23 @@ class GetAppleSignInHandler: NSObject, ASAuthorizationControllerDelegate {
         let _challenge: String = call.getString("challenge")!
         let _userid: String = call.getObject("user")?["id"] as! String
         let _username: String = call.getObject("user")?["name"] as! String
-        let _rp: String = call.getObject("rp")?["id"] as! String
+        var _rp: String = call.getObject("rp")?["id"] as! String
+        
+        // For local development, if the RP ID contains localhost or dev domain,
+        // use the app bundle identifier instead to avoid domain association issues
+        if _rp.contains("localhost") || _rp.contains("dev.komyun") || _rp.contains("192.168") {
+            // Use the main bundle identifier without the team prefix
+            if let bundleId = Bundle.main.bundleIdentifier {
+                // Extract just the app ID part (e.g., "co.komyun.app" from "FT574Q62GF.co.komyun.app")
+                let components = bundleId.components(separatedBy: ".")
+                if components.count > 2 {
+                    _rp = components.suffix(3).joined(separator: ".")
+                } else {
+                    _rp = bundleId
+                }
+                print("WebAuthn Register - Using bundle ID for local dev: \(_rp)")
+            }
+        }
         
         print("WebAuthn Register - RP: \(_rp), User: \(_username), UserID: \(_userid)")
         
@@ -78,7 +94,23 @@ class GetAppleSignInHandler: NSObject, ASAuthorizationControllerDelegate {
     
     func authenticate() {
         let _challenge: String = call.getString("challenge")!
-        let _rp: String = call.getString("rpId")!
+        var _rp: String = call.getString("rpId")!
+        
+        // For local development, if the RP ID contains localhost or dev domain,
+        // use the app bundle identifier instead to avoid domain association issues
+        if _rp.contains("localhost") || _rp.contains("dev.komyun") || _rp.contains("192.168") {
+            // Use the main bundle identifier without the team prefix
+            if let bundleId = Bundle.main.bundleIdentifier {
+                // Extract just the app ID part (e.g., "co.komyun.app" from "FT574Q62GF.co.komyun.app")
+                let components = bundleId.components(separatedBy: ".")
+                if components.count > 2 {
+                    _rp = components.suffix(3).joined(separator: ".")
+                } else {
+                    _rp = bundleId
+                }
+                print("WebAuthn Authenticate - Using bundle ID for local dev: \(_rp)")
+            }
+        }
         
         let challengeData = Data(base64urlEncoded: _challenge)!
         
