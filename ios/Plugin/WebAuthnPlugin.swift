@@ -1,7 +1,29 @@
 import Foundation
 import Capacitor
 import AuthenticationServices
-import base64url
+
+// Base64URL encoding/decoding extension
+extension Data {
+    init?(base64urlEncoded: String) {
+        var base64 = base64urlEncoded
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        
+        // Add padding if needed
+        while base64.count % 4 != 0 {
+            base64.append("=")
+        }
+        
+        self.init(base64Encoded: base64)
+    }
+    
+    func base64urlEncodedString() -> String {
+        return self.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+}
 
 enum Attachment: String {
     case CROSSPLATFORM = "crossplatform"
